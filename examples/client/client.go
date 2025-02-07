@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"log"
 
-	"github.com/foomo/soap"
+	"github.com/Circutor/soap"
 )
 
 // FooRequest a simple request
