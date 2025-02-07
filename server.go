@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -134,7 +134,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		l("incoming POST")
-		soapRequestBytes, err := ioutil.ReadAll(r.Body)
+		soapRequestBytes, err := io.ReadAll(r.Body)
 		// Our structs for Envelope, Header, Body and Fault are tagged with namespace for SOAP 1.1
 		// Therefore we must adjust namespaces for incoming SOAP 1.2 messages
 		if s.SoapVersion == SoapVersion12 {
@@ -242,4 +242,8 @@ func jsonDump(v interface{}) string {
 // ListenAndServe run standalone
 func (s *Server) ListenAndServe(addr string) error {
 	return http.ListenAndServe(addr, s)
+}
+
+func (s *Server) ListenAndServeTLS(addr, certFile, keyFile string) error {
+	return http.ListenAndServeTLS(addr, certFile, keyFile, s)
 }

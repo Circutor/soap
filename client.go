@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"mime/multipart"
@@ -158,7 +157,7 @@ func (c *Client) Call(soapAction string, request, response interface{}) (httpRes
 			if err != nil {
 				return nil, err
 			}
-			slurp, err := ioutil.ReadAll(p)
+			slurp, err := io.ReadAll(p)
 			if err != nil {
 				return nil, err
 			}
@@ -172,7 +171,7 @@ func (c *Client) Call(soapAction string, request, response interface{}) (httpRes
 			return nil, errors.New("Multipart message does contain a soapy part.")
 		}
 	} else { // SINGLE PART MESSAGE
-		rawbody, err = ioutil.ReadAll(httpResponse.Body)
+		rawbody, err = io.ReadAll(httpResponse.Body)
 		if err != nil {
 			return httpResponse, err
 		}
