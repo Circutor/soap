@@ -8,7 +8,6 @@ import (
 	"log"
 	"mime"
 	"mime/multipart"
-	"net"
 	"net/http"
 	"reflect"
 	"strings"
@@ -31,7 +30,14 @@ type defaultMarshaller struct {
 }
 
 func (dm *defaultMarshaller) Marshal(v interface{}) (xmlBytes []byte, err error) {
-	return xml.MarshalIndent(v, "", "	")
+	xmlBytes, err = xml.MarshalIndent(v, "", "	")
+	if err != nil {
+		return nil, err
+	}
+
+	xmlBytes = []byte(xml.Header + string(xmlBytes))
+
+	return xmlBytes, nil
 }
 
 func (dm *defaultMarshaller) Unmarshal(xmlBytes []byte, v interface{}) error {
@@ -40,10 +46,6 @@ func (dm *defaultMarshaller) Unmarshal(xmlBytes []byte, v interface{}) error {
 
 func newDefaultMarshaller() XMLMarshaller {
 	return &defaultMarshaller{}
-}
-
-func dialTimeout(network, addr string) (net.Conn, error) {
-	return net.DialTimeout(network, addr, ClientDialTimeout)
 }
 
 // BasicAuth credentials for the client
@@ -55,7 +57,6 @@ type BasicAuth struct {
 // Client generic SOAP client
 type Client struct {
 	url         string
-	tls         bool
 	auth        *BasicAuth
 	tr          *http.Transport
 	Marshaller  XMLMarshaller
@@ -168,7 +169,7 @@ func (c *Client) Call(soapAction string, request, response interface{}) (httpRes
 			}
 		}
 		if !foundSoap {
-			return nil, errors.New("Multipart message does contain a soapy part.")
+			return nil, errors.New("multipart message does contain a soapy part")
 		}
 	} else { // SINGLE PART MESSAGE
 		rawbody, err = io.ReadAll(httpResponse.Body)
@@ -292,5 +293,5 @@ func formatFaultXML(xmlBytes []byte, startLevel int) string {
 
 		}
 	}
-	return strings.Trim(string(out.Bytes()), " \n")
+	return strings.Trim(out.String(), " \n")
 }
