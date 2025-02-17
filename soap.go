@@ -40,22 +40,43 @@ func LogJSON(v interface{}) {
 }
 
 // Envelope type
-type Envelope struct {
+type EnvelopeSend struct {
+	XMLName xml.Name `xml:"soap:Envelope"`
+	XmlNS   string   `xml:"xmlns:soap,attr"`
+	Header  HeaderSend
+	Body    BodySend
+}
+
+type EnvelopeReceive struct {
 	XMLName xml.Name `xml:"http://schemas.xmlsoap.org/soap/envelope/ Envelope"`
-	Header  Header
-	Body    Body
+	Header  HeaderReceive
+	Body    BodyReceive
 }
 
 // Header type
-type Header struct {
-	XMLName xml.Name `xml:"http://schemas.xmlsoap.org/soap/envelope/ Header"`
+type HeaderSend struct {
+	XMLName xml.Name `xml:"soap:Header"`
+
+	Header interface{}
+}
+
+type HeaderReceive struct {
+	XMLName xml.Name `xml:"Header"`
 
 	Header interface{}
 }
 
 // Body type
-type Body struct {
-	XMLName xml.Name `xml:"http://schemas.xmlsoap.org/soap/envelope/ Body"`
+type BodySend struct {
+	XMLName xml.Name `xml:"soap:Body"`
+
+	Fault               *Fault      `xml:",omitempty"`
+	Content             interface{} `xml:",omitempty"`
+	SOAPBodyContentType string      `xml:"-"`
+}
+
+type BodyReceive struct {
+	XMLName xml.Name `xml:"Body"`
 
 	Fault               *Fault      `xml:",omitempty"`
 	Content             interface{} `xml:",omitempty"`
@@ -73,7 +94,7 @@ type Fault struct {
 }
 
 // UnmarshalXML implement xml.Unmarshaler
-func (b *Body) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (b *BodyReceive) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	if b.Content == nil {
 		return xml.UnmarshalError("Content must be a pointer to a struct")
 	}
@@ -98,7 +119,7 @@ Loop:
 		case xml.StartElement:
 			if consumed {
 				return xml.UnmarshalError("Found multiple elements inside SOAP body; not wrapped-document/literal WS-I compliant")
-			} else if se.Name.Space == "http://schemas.xmlsoap.org/soap/envelope/" && se.Name.Local == "Fault" {
+			} else if se.Name.Space == NamespaceSoap11 && se.Name.Local == "Fault" {
 				b.Fault = &Fault{}
 				b.Content = nil
 

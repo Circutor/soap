@@ -91,8 +91,9 @@ func (s *Server) RegisterHandler(path string, action string, messageType string,
 func (s *Server) handleError(err error, w http.ResponseWriter) {
 	// has to write a soap fault
 	l("handling error:", err)
-	responseEnvelope := &Envelope{
-		Body: Body{
+	responseEnvelope := &EnvelopeSend{
+		XmlNS: NamespaceSoap11,
+		Body: BodySend{
 			Content: &Fault{
 				String: err.Error(),
 			},
@@ -159,8 +160,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// we need to find out, what is in the body
-		probeEnvelope := &Envelope{
-			Body: Body{
+		probeEnvelope := &EnvelopeReceive{
+			Body: BodyReceive{
 				Content: &dummyContent{},
 			},
 		}
@@ -179,9 +180,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		request := actionHandler.requestFactory()
-		envelope := &Envelope{
-			Header: Header{},
-			Body: Body{
+		envelope := &EnvelopeReceive{
+			Header: HeaderReceive{},
+			Body: BodyReceive{
 				Content: request,
 			},
 		}
@@ -201,8 +202,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		l("result", jsonDump(response))
 		if !w.(*responseWriter).outputStarted {
-			responseEnvelope := &Envelope{
-				Body: Body{
+			responseEnvelope := &EnvelopeSend{
+				XmlNS: NamespaceSoap11,
+				Body: BodySend{
 					Content: response,
 				},
 			}

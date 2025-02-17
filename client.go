@@ -20,7 +20,7 @@ var ClientDialTimeout = time.Duration(30 * time.Second)
 // UserAgent is the default user agent
 var UserAgent = "go-soap-0.1"
 
-// XMLMarshaller lets you inject your favourite custom xml implementation
+// XMLMarshaller lets you inject your favorite custom xml implementation
 type XMLMarshaller interface {
 	Marshal(v interface{}) ([]byte, error)
 	Unmarshal(xml []byte, v interface{}) error
@@ -88,10 +88,12 @@ func (c *Client) UseSoap12() {
 
 // Call make a SOAP call
 func (c *Client) Call(soapAction string, request, response interface{}) (httpResponse *http.Response, err error) {
-
-	envelope := Envelope{}
-
-	envelope.Body.Content = request
+	envelope := EnvelopeSend{
+		XmlNS: NamespaceSoap11,
+		Body: BodySend{
+			Content: request,
+		},
+	}
 
 	xmlBytes, err := c.Marshaller.Marshal(envelope)
 	if err != nil {
@@ -198,15 +200,15 @@ func (c *Client) Call(soapAction string, request, response interface{}) (httpRes
 	tmp = strings.Replace(tmp, NamespaceSoap12, NamespaceSoap11, -1)
 	rawbody = []byte(tmp)
 
-	respEnvelope := new(Envelope)
+	respEnvelope := new(EnvelopeReceive)
 	type Dummy struct {
 	}
 	// Response struct may be nil, e.g. if only a Status 200 is expected.
 	// In this case, we need a Dummy response to avoid a nil pointer if we receive a SOAP-Fault instead of the empty message (unmarshalling would fail)
 	if response == nil {
-		respEnvelope.Body = Body{Content: &Dummy{}}
+		respEnvelope.Body = BodyReceive{Content: &Dummy{}}
 	} else {
-		respEnvelope.Body = Body{Content: response}
+		respEnvelope.Body = BodyReceive{Content: response}
 	}
 
 	err = xml.Unmarshal(rawbody, respEnvelope)
